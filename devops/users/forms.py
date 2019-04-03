@@ -1,10 +1,13 @@
 from django import forms
-
-from models import *
+from .models import User 
 
 class LoginForm(forms.ModelForm):
-	password = forms.CharField(widget=forms.PasswordInput)
-
 	class Meta:
 		model = User 
 		fields = ('username','password')
+		widgets = {
+            'password': forms.PasswordInput(),
+        }
+	def clean(self):
+		return self.cleaned_data 
+	
