@@ -79,11 +79,20 @@ class UserAdmin(BaseUserAdmin):
 	ordering = ('email',)
 	filter_horizontal = ()
 
+class PublisherAdmin(admin.ModelAdmin):
+	list_display = ('name',)
+
+class AuthorAdmin(admin.ModelAdmin):
+	list_display = ('name',)
+
+class BookAdmin(admin.ModelAdmin):
+	list_display = ('title',)
+
 # Now register the new UserAdmin...
 admin.site.register(User, UserAdmin)
-admin.site.register(Publisher)
-admin.site.register(Author)
-admin.site.register(Book)
+admin.site.register(Publisher,PublisherAdmin)
+admin.site.register(Author,AuthorAdmin)
+admin.site.register(Book,BookAdmin)
 # ... and, since we're not using Django's built-in permissions,
 # unregister the Group model from admin.
 admin.site.unregister(Group)

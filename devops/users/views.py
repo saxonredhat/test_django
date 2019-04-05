@@ -8,10 +8,14 @@ from django.urls import reverse
 from .forms import LoginForm,ContactForm
 from django.views import View
 from django.views.generic import ListView,DetailView
-from django.views.generic.edit import CreateView,UpdateView,DeleteView,FormView 
+from django.views.generic.edit import CreateView,UpdateView,DeleteView,FormView,FormMixin 
+from django.views.generic.detail import SingleObjectMixin
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django import forms
+
 from .models import Publisher,Book,Author
+import logging as log
 
 
 # Create your views here.
@@ -90,27 +94,83 @@ class BookList(ListView):
 	template_name = 'users/book_list.html'
 
 
-class PublisherBookList(ListView):
+class PublisherBookList(SingleObjectMixin, ListView):
+	paginate_by = 2
 	template_name = 'users/publisher_book_list.html'
-	context_object_name = 'publisher_book_list'
-	
+
+	def get(self, request,**kwargs):
+		log.info('## Enter Function get() ##')
+		self.object = self.get_object(queryset=Publisher.objects.all())
+		try:
+			return super(PublisherBookList, self).get(self,request,**kwargs)
+		finally:
+			log.info('## Leave Function get() ##')
+
 	def get_queryset(self):
-		self.publisher = get_object_or_404(Publisher,name = self.args[0])
-		return Book.objects.filter(publisher=self.publisher)
+		log.info('## Enter Function get_queryset() ##')
+		try:
+			return self.object.book_set.all()
+		finally:
+			log.info('## Leave Function  get_queryset() ##')
 
 	def get_context_data(self, **kwargs):
+		log.info('## Enter Function get_context_data() ##')
 		context = super(PublisherBookList, self).get_context_data(**kwargs)
-		context['publisher'] = self.publisher
-		return context
+		context['publisher'] = self.object
+		log.info('## leave Function get_context_data() ##')
+		log.info(context)
+		try:
+			return context
+		finally:
+			log.info('## leave Function get_context_data() ##')
 
 class AcmeBookList(ListView):
 	context_object_name = 'book_list'
 	queryset = Book.objects.filter(publisher__name='ACME Publishing')
 	template_name = 'books/acme_list.html'
 
+class AuthorInterestForm(forms.Form):
+	message = forms.CharField()
+
+class AuthorDetail(FormMixin, DetailView):
+	model = Author
+	form_class = AuthorInterestForm
+	
+	def get_success_url(self):
+		return reverse('author-detail', kwargs={'pk': self.object.pk})
+	
+	def get_context_data(self, **kwargs):
+		context = super(AuthorDetail, self).get_context_data(**kwargs)
+		context['form'] = self.get_form()
+		return context
+
+	def post(self, request, *args, **kwargs):
+		if not request.user.is_authenticated:
+			return HttpResponseForbidden()
+		self.object = self.get_object()
+		form = self.get_form()
+		if form.is_valid():
+			return self.form_valid(form)
+		else:
+			return self.form_invalid(form)
+
+	def form_valid(self, form):
+		return super(AuthorDetail, self).form_valid(form)
+
+
+class RecordInterest(SingleObjectMixin, View):
+	model = Author
+	
+	def post(self, request, *args, **kwargs):
+		if not request.user.is_authenticated:
+			return HttpResponseForbidden()
+		self.object = self.get_object()
+		return HttpResponseRedirect(reverse('users:author-detail', kwargs={'pk': self.object.pk}))
+
 
 class AuthorDetailView(DetailView):
 	queryset = Author.objects.all()
+	template_name = 'users/author_detail.html'
 	
 	def get_object(self):
 		object = super(AuthorDetailView, self).get_object()
