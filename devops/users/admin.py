@@ -1,10 +1,10 @@
 from django import forms
 from django.contrib import admin
-from django.contrib.auth.models import Group
+#from django.contrib.auth.models import Permission,Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
-from .models import User,Author,Publisher,Book
+from .models import User,Role,Permission,Menu
 
 
 class UserCreationForm(forms.ModelForm):
@@ -15,7 +15,7 @@ class UserCreationForm(forms.ModelForm):
 
 	class Meta:
 		model = User
-		fields = ('email', 'phone')
+		fields = ('username','email', 'phone')
 
 	def clean_password2(self):
 		# Check that the two password entries match
@@ -43,13 +43,16 @@ class UserChangeForm(forms.ModelForm):
 
 	class Meta:
 		model = User
-		fields = ('email', 'password', 'phone', 'is_active', 'is_superuser')
+		fields = ('username','email', 'password', 'phone', 'is_active', 'is_superuser')
 
 	def clean_password(self):
 		# Regardless of what the user provides, return the initial value.
 		# This is done here, rather than on the field, because the
 		# field does not have access to the initial value
 		return self.initial["password"]
+
+class RoleInline(admin.TabularInline):
+	model = User.roles.through
 
 
 class UserAdmin(BaseUserAdmin):
@@ -62,37 +65,41 @@ class UserAdmin(BaseUserAdmin):
 	# that reference specific fields on auth.User.
 	list_display = ('username','email', 'phone', 'is_superuser')
 	list_filter = ('is_superuser',)
+	inlines = (RoleInline,)
 	fieldsets = (
-		(None, {'fields': ('email', 'password')}),
+		(None, {'fields': ('username','email', 'password')}),
 		('Personal info', {'fields': ('phone',)}),
 		('Permissions', {'fields': ('is_superuser',)}),
 	)
+	filter_horizontal = ('roles', )
 	# add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
 	# overrides get_fieldsets to use this attribute when creating a user.
 	add_fieldsets = (
 		(None, {
 			'classes': ('wide',),
-			'fields': ('email', 'phone', 'password1', 'password2')}
+			'fields': ('username','email', 'phone', 'password1', 'password2')}
 		),
 	)
 	search_fields = ('email',)
 	ordering = ('email',)
-	filter_horizontal = ()
 
-class PublisherAdmin(admin.ModelAdmin):
-	list_display = ('name',)
+class RoleAdmin(admin.ModelAdmin):
+	list_display = ('name','get_permissions')
 
-class AuthorAdmin(admin.ModelAdmin):
-	list_display = ('name',)
+	def get_permissions(self,obj):
+		return " | ".join([p.name for p in obj.permissions.all()])
 
-class BookAdmin(admin.ModelAdmin):
-	list_display = ('title',)
+class PermissionAdmin(admin.ModelAdmin):
+	list_display = ('name','codename','comment')
+
+class MenuAdmin(admin.ModelAdmin):
+	list_display = ('name','url','parent_menu','is_topmenu')
 
 # Now register the new UserAdmin...
 admin.site.register(User, UserAdmin)
-admin.site.register(Publisher,PublisherAdmin)
-admin.site.register(Author,AuthorAdmin)
-admin.site.register(Book,BookAdmin)
+admin.site.register(Role, RoleAdmin)
+admin.site.register(Permission, PermissionAdmin)
+admin.site.register(Menu, MenuAdmin)
 # ... and, since we're not using Django's built-in permissions,
 # unregister the Group model from admin.
-admin.site.unregister(Group)
+#admin.site.unregister(Group)

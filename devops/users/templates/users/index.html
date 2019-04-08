@@ -1,0 +1,11 @@
+{% extends "users/base.html" %}
+{% block content %}
+	{% for menu in object_list %}
+		{{menu.name}}<br>
+		{% for submenu in menu.submenus.all %}
+			- <a href="{{submenu.url}}">{{submenu.name}}</a><br>
+		{% endfor %}
+		<br>
+	{% endfor %}
+{% endblock %}
+

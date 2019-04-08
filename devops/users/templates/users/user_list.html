@@ -1,0 +1,18 @@
+{% extends "users/base.html" %}
+
+{% block content %}
+	用户列表: +<a href="{% url 'users:user-add' %}">添加用户</a>
+	<table border="1px" style="border-collapse:collapse">
+	<tr><th>用户名</th><th>邮箱</th><th>操作</th></tr>
+	{% for user in object_list %}
+			<tr>
+			<td><a href="{% url 'users:user-detail' user.id %}">{{user.username}}</a></td>
+			<td>{{user.email}}</td>
+			<td>
+			<a href="{% url 'users:user-update' user.id %}">修改</a>
+			<a href="{% url 'users:user-delete' user.id %}">删除</a>
+			</td>
+			</tr>
+	{% endfor %}
+	</table>
+{% endblock %}

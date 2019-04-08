@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views import generic
-from django.contrib.auth import authenticate,login
+from django.contrib.auth import authenticate,login,logout
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -13,12 +13,22 @@ from django.views.generic.detail import SingleObjectMixin
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django import forms
-
-from .models import Publisher,Book,Author
+from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
+from django.contrib import messages
+from django.urls.exceptions import NoReverseMatch 
+from .models import User,Role,Permission,Menu
+from django.contrib.auth.hashers import (
+	check_password, is_password_usable, make_password,
+)
 import logging as log
 
 
 # Create your views here.
+class IndexListView(LoginRequiredMixin,
+					ListView):
+	template_name = 'users/index.html'
+	queryset = Menu.objects.filter(is_topmenu=True)
+
 
 class UserLoginView(View):
 	"""User Login View
@@ -39,12 +49,19 @@ class UserLoginView(View):
 			user = authenticate(username=username, password=password)
 			if user is not None:
 				login(request,user)
-				return HttpResponseRedirect(reverse('users:needlogin'))
+				return HttpResponseRedirect(reverse('users:index'))
 		return render(request,self.template_name,{'login_form':login_form})
 
 	def dispatch(self, request, *args, **kwargs):
 		obj = super(UserLoginView,self).dispatch(request, *args, **kwargs)
 		return obj
+
+
+class UserLogoutView(LoginRequiredMixin,
+					View):
+	def get(self,request):
+		logout(request)
+		return HttpResponseRedirect(reverse('users:user-login'))
 
 
 class ProtectedPageView(View):
@@ -71,143 +88,197 @@ class NeedLoginView(View):
 		return obj
 
 
-class PublisherList(ListView):
-	model = Publisher
-	template_name='users/publisher_list.html'
-	context_object_name = 'publisher_list'
+class RoleListView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					ListView):
+	permission_required = 'ROLE_VIEW'
+	model = Role
 
 
-class PublisherDetail(DetailView):
-	model = Publisher
-	template_name='users/publisher_detail.html'
-	#queryset = Publisher.objects.all()
-	
-	def get_contenxt_data(self, **kwargs):
-		context = super(PublisherDetail, self).get_context_data(**kwargs)
-		context['book_list'] = Book.objects.all()
-		return context
+class RoleDetailView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					DetailView):
+	permission_required = 'ROLE_VIEW'
+	model = Role
+
+class RoleForm(forms.ModelForm):
+	permissions = forms.ModelMultipleChoiceField(
+		widget=forms.CheckboxSelectMultiple,
+		queryset=Permission.objects.filter(level=2),
+		required=False,
+	)
+	class Meta:
+		model = Role
+		fields = '__all__'
 
 
-class BookList(ListView):
-	queryset = Book.objects.order_by('-publication_date')
-	context_object_name = 'book_list'
-	template_name = 'users/book_list.html'
+class RoleCreateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					CreateView):
+	permission_required = 'ROLE_ADD'
+	template_name = 'users/user_form.html'
+	form_class = RoleForm
+	#fields = ['name','permissions']
 
 
-class PublisherBookList(SingleObjectMixin, ListView):
-	paginate_by = 2
-	template_name = 'users/publisher_book_list.html'
+class RoleDeleteView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					DeleteView):
+	permission_required = 'ROLE_DELETE'
+	model = Role 
+	success_url = reverse_lazy('users:role-list')
 
-	def get(self, request,**kwargs):
-		log.info('## Enter Function get() ##')
-		self.object = self.get_object(queryset=Publisher.objects.all())
-		try:
-			return super(PublisherBookList, self).get(self,request,**kwargs)
-		finally:
-			log.info('## Leave Function get() ##')
 
-	def get_queryset(self):
-		log.info('## Enter Function get_queryset() ##')
-		try:
-			return self.object.book_set.all()
-		finally:
-			log.info('## Leave Function  get_queryset() ##')
+class RoleUpdateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					UpdateView):
+	permission_required = 'ROLE_UPDATE'
+	template_name = 'users/role_update_form.html'
+	form_class = RoleForm
+	model = Role
 
-	def get_context_data(self, **kwargs):
-		log.info('## Enter Function get_context_data() ##')
-		context = super(PublisherBookList, self).get_context_data(**kwargs)
-		context['publisher'] = self.object
-		log.info('## leave Function get_context_data() ##')
-		log.info(context)
-		try:
-			return context
-		finally:
-			log.info('## leave Function get_context_data() ##')
 
-class AcmeBookList(ListView):
-	context_object_name = 'book_list'
-	queryset = Book.objects.filter(publisher__name='ACME Publishing')
-	template_name = 'books/acme_list.html'
+class UserListView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					ListView):
+	permission_required = 'USER_VIEW'
+	model = User 
 
-class AuthorInterestForm(forms.Form):
-	message = forms.CharField()
 
-class AuthorDetail(FormMixin, DetailView):
-	model = Author
-	form_class = AuthorInterestForm
-	
-	def get_success_url(self):
-		return reverse('author-detail', kwargs={'pk': self.object.pk})
-	
-	def get_context_data(self, **kwargs):
-		context = super(AuthorDetail, self).get_context_data(**kwargs)
-		context['form'] = self.get_form()
-		return context
+class UserDetailView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					DetailView):
+	permission_required = 'USER_VEIW'
+	model = User 
 
-	def post(self, request, *args, **kwargs):
-		if not request.user.is_authenticated:
-			return HttpResponseForbidden()
-		self.object = self.get_object()
-		form = self.get_form()
-		if form.is_valid():
-			return self.form_valid(form)
-		else:
-			return self.form_invalid(form)
+
+class UserCreateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					CreateView):
+	permission_required = 'USER_ADD'
+	model = User 
+	fields = ['username','email','phone','password','roles','is_active']
+
+
+	def get_form(self, form_class=None):
+		form = super(UserCreateView, self).get_form(form_class)
+		form.instance.user = self.request.user
+		form.fields['password'].widget = forms.PasswordInput()
+		return form
 
 	def form_valid(self, form):
-		return super(AuthorDetail, self).form_valid(form)
+		form.instance.password = make_password(form.cleaned_data['password'])
+		form.save()
+		return super(UserCreateView, self).form_valid(form)
 
 
-class RecordInterest(SingleObjectMixin, View):
-	model = Author
-	
-	def post(self, request, *args, **kwargs):
-		if not request.user.is_authenticated:
-			return HttpResponseForbidden()
-		self.object = self.get_object()
-		return HttpResponseRedirect(reverse('users:author-detail', kwargs={'pk': self.object.pk}))
+class UserDeleteView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					DeleteView):
+	permission_required = 'USER_DELETE'
+	model = User 
+	success_url = reverse_lazy('users:user-list')
 
 
-class AuthorDetailView(DetailView):
-	queryset = Author.objects.all()
-	template_name = 'users/author_detail.html'
-	
-	def get_object(self):
-		object = super(AuthorDetailView, self).get_object()
-		object.last_accessed = timezone.now()
-		object.save()
-		return object
-
-	
-def Thanks(self,request):
-	return HttpResponse('Thanks!!!')
+class UserUpdateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					UpdateView):
+	permission_required = 'USER_UPDATE'
+	model = User 
+	fields = ['username','email','phone','roles','is_active']
 
 
-class ContactView(FormView):
-	template_name = 'users/contact.html'
-	form_class = ContactForm
-	success_url = '/thanks/'
-	
-	def form_valid(self, form):
-		form.send_email()
-		return super(ContactView,self).form_valid(form)
+class PermissionListView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					ListView):
+	permission_required = 'PERMISSION_VIEW'
+	model = Permission 
+	paginate_by = 10
+	queryset = Permission.objects.all().order_by('seq')
 
 
-class AuthorCreate(CreateView):
-	model = Author
-	template_name = 'users/author_add.html'
-	fields = ['name']
+class PermissionForm(forms.ModelForm):
+	comment = forms.CharField(widget=forms.Textarea(attrs={'width':"100%",'cols':80,'rows':6}))
+	parent_permission = forms.ModelChoiceField(
+        queryset=Permission.objects.filter(level=1),
+        required=False,
+    )
 
-	def form_valid(self, form):
-		form.instance.created_by = self.request.user
-		return super(AuthorCreate, self).form_valid(form)
-
-
-class AuthorUpdate(UpdateView):
-	model = Author
-	fields = ['name']
+	class Meta:
+		model = Permission 
+		fields = ['name', 'codename', 'level', 'parent_permission', 'seq', 'comment'] 
 
 
-class AuthorDelete(DeleteView):
-	model = Author
-	success_url = reverse_lazy('author-list')
+class PermissionCreateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					CreateView):
+	permission_required = 'PERMISSION_ADD'
+	template_name = 'users/permission_form.html'
+	form_class = PermissionForm
+
+
+class PermissionDeleteView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					DeleteView):
+	permission_required = 'PERMISSION_DELETE'
+	model = Permission 
+	success_url = reverse_lazy('users:permission-list')
+
+
+class PermissionUpdateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					UpdateView):
+	permission_required = 'PERMISSION_UPDATE'
+	template_name = 'users/permission_update_form.html'
+	form_class = PermissionForm	
+	model = Permission 
+
+
+class MenuListView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					ListView):
+	permission_required = 'MENU_VIEW'
+	model = Menu 
+	template_name = 'users/menu_list.html'
+
+
+class MenuDetailView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					DetailView):
+	permission_required = 'MENU_VIEW'
+	model = Menu 
+
+
+class MenuForm(forms.ModelForm):
+	parent_menu = forms.ModelChoiceField(
+		queryset=Menu.objects.filter(is_topmenu=True),
+		required=False,
+	)
+	class Meta:
+		model = Menu
+		fields = '__all__'
+
+
+class MenuCreateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					CreateView):
+	permission_required = 'MENU_ADD'
+	template_name = 'users/user_form.html'
+	form_class = MenuForm
+
+
+class MenuDeleteView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					DeleteView):
+	permission_required = 'MENU_DELETE'
+	model = Menu 
+	success_url = reverse_lazy('users:menu-list')
+
+
+class MenuUpdateView(LoginRequiredMixin,
+					PermissionRequiredMixin,
+					UpdateView):
+	permission_required = 'MENU_UPDATE'
+	template_name = 'users/menu_update_form.html'
+	form_class = MenuForm	
+	model = Menu 

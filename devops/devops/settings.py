@@ -104,6 +104,8 @@ AUTH_PASSWORD_VALIDATORS = [
 	},
 ]
 
+#PASSWORD_HASHERS =  
+
 AUTH_USER_MODEL = 'users.User'
 
 # Internationalization
@@ -111,7 +113,9 @@ AUTH_USER_MODEL = 'users.User'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+#TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
+
 
 USE_I18N = True
 
@@ -128,3 +132,39 @@ STATIC_URL = '/static/'
 LOGIN_URL = '/users/login/'
 ADMIN_LOGIN = 'admin'
 ADMIN_PASSWORD = 'pbkdf2_sha256$120000$47TtF1uxrrhG$RwPRuUjLFqMUtGlzPvz7gDL4VVUCNelDi3tUAGmGRXI='
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] [{module}.{funcName}][Line:{lineno:3}][{levelname}] => [{message}]',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': '/tmp/django.log',
+            'maxBytes': 4194304,  # 4 MB
+            'backupCount': 10,
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console', 'file'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+        },
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
+            'propagate': False,
+        },
+    },
+}

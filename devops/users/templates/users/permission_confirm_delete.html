@@ -1,0 +1,7 @@
+{% block content %}
+	<form method="post">
+	{% csrf_token %}
+    <p>你确定要删除该权限"{{ object }}"?</p>
+    <input type="submit" value="确定">
+	</form>
+{% endblock %}

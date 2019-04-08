@@ -1,0 +1,8 @@
+{% extends "users/base.html" %}
+{% block content %}
+{{object.name}}<br>
+拥有的权限:<br>
+{% for perm in object.permissions.all %}
+	{{perm.name}},{{perm.codename}}<br>
+{% endfor %}
+{% endblock %}
