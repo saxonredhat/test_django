@@ -223,6 +223,13 @@ class UserDetailView(LoginRequiredMixin,
 					DetailView):
 	permission_required = 'USER_VEIW'
 	model = User 
+	template_name = 'users/role_form.html'
+
+
+class UserProfileView(LoginRequiredMixin,
+					DetailView):
+	model = User 
+	template_name = 'users/user_profile.html'
 
 
 class UserCreateView(LoginRequiredMixin,

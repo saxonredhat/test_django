@@ -1,0 +1,54 @@
+{% extends 'common.html' %}
+{% load staticfiles %}
+{% block title %}个人信息{% endblock %}
+
+<!-- Content Header (Page header) -->
+{% block content-header %}	
+<section class="content-header">
+  <h1>
+    个人信息
+    <small></small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">个人信息</li>
+  </ol>
+</section>
+{% endblock %}
+
+{% block boxtitle %}
+个人信息
+{% endblock %}
+
+{% block box %}
+	 <!-- Profile Image -->
+          <div class="box box-primary">
+            <div class="box-body box-profile">
+              <img class="profile-user-img img-responsive img-circle" src="{% static 'dist/img/user2-160x160.jpg' %}" alt="User profile picture">
+
+              <h3 class="profile-username text-center">{{user.username}}</h3>
+
+              <p class="text-muted text-center">{{user.department.name}}</p>
+
+			  <!--
+              <ul class="list-group list-group-unbordered">
+                <li class="list-group-item">
+                  <b>Followers</b> <a class="pull-right">1,322</a>
+                </li>
+                <li class="list-group-item">
+                  <b>Following</b> <a class="pull-right">543</a>
+                </li>
+                <li class="list-group-item">
+                  <b>Friends</b> <a class="pull-right">13,287</a>
+                </li>
+              </ul>
+
+              <a href="#" class="btn btn-primary btn-block"><b>Follow</b></a>
+			  -->
+
+            </div>
+            <!-- /.box-body -->
+          </div>
+          <!-- /.box -->
+
+{% endblock %}

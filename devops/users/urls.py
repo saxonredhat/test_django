@@ -11,6 +11,7 @@ urlpatterns = [
 	path('test_tableview/', views.UserListTest.as_view(),name='user-tableview'),
 	path('login/', views.UserLoginView.as_view(),name='user-login'),
 	path('logout/', views.UserLogoutView.as_view(),name='user-logout'),
+	path('profile/<int:pk>/', views.UserProfileView.as_view(),name='user-profile'),
 	path('role/<int:pk>/', views.RoleDetailView.as_view(),name='role-detail'),
 	path('role/delete/<int:pk>/', views.RoleDeleteView.as_view(),name='role-delete'),
 	path('role/update/<int:pk>/', views.RoleUpdateView.as_view(),name='role-update'),
