@@ -4,6 +4,7 @@ from django.contrib.auth.hashers import (
     check_password, is_password_usable, make_password,
 )
 
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from .models import User,Role,Permission
 
@@ -14,7 +15,7 @@ class MyAuthBackend(ModelBackend):
 	"""
 	def authenticate(self, request, username=None, password=None):
 		try:
-			user = User.objects.get(username=username)
+			user = User.objects.get(Q(username=username)|Q(email=username))
 		except User.DoesNotExist:
 			return None
 		else:

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+	{% for menu in object_list %}
+		{{menu.name}}<br>
+		{% for submenu in menu.submenus.all %}
+			- <a href="{{submenu.url}}">{{submenu.name}}</a><br>
+		{% endfor %}
+		<br>
+	{% endfor %}
+{% endblock %}
+
+
+<div id="accordion">
+  {% for menu in object_list %}
+	  <div class="card">
+		<div class="card-header" id="heading{{menu.id}}">
+		  <h5 class="mb-0">
+			<button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{menu.id}}" aria-expanded="true" aria-controls="collapse{{menu.id}}">
+			  {{menu.name}} 
+			</button>
+		  </h5>
+		</div>
+		<div id="collapse{{menu.id}}" class="collapse show" aria-labelledby="heading{{menu.id}}" data-parent="#accordion">
+		  <div class="card-body">
+			{% for submenu in menu.submenus.all %}
+			<button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{menu.id}}" aria-expanded="true" aria-controls="collapse{{menu.id}}">
+			  {{submenu.name}} 
+			</button>
+			{% endfor %}
+		  </div>
+		</div>
+	  </div>
+  {% endfor %}
+</div>

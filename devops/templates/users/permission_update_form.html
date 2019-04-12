@@ -1,0 +1,29 @@
+{% extends 'forms.html' %}
+{% load crispy_forms_tags %}
+{% block title %}修改权限{% endblock %}
+
+<!-- Content Header (Page header) -->
+{% block content-header %}	
+<section class="content-header">
+  <h1>
+    修改权限
+    <small></small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">修改权限</li>
+  </ol>
+</section>
+{% endblock %}
+
+{% block boxtitle %}
+修改权限
+{% endblock %}
+
+{% block form %}
+	<form method="post" role="form">{% csrf_token %}
+	<div class="box-body">
+		{% crispy form %}
+	</div>
+    </form>
+{% endblock %}

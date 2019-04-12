@@ -1,7 +1,0 @@
-{% if user.is_authenticated %}
-	<a href="{% url 'users:index' %}">Home</a>,你好,{{user.username}}!
-	<a href="{% url 'users:user-logout' %}">logout</a>
-	<br>
-{% endif %}
-{% block content %}
-{% endblock %}

@@ -1,15 +1,16 @@
 from django.urls import path
+from django.views.generic.base import RedirectView
 
 from . import views
 
 app_name='users'
 
 urlpatterns = [
-	path('', views.IndexListView.as_view(),name='index'),
+	path('',RedirectView.as_view(url='/users/user/list'),name='index'),
+	path('test_table/', views.test_table,name='user-table'),
+	path('test_tableview/', views.UserListTest.as_view(),name='user-tableview'),
 	path('login/', views.UserLoginView.as_view(),name='user-login'),
 	path('logout/', views.UserLogoutView.as_view(),name='user-logout'),
-	path('protected/', views.ProtectedPageView.as_view(),name='protected'),
-	path('needlogin/', views.NeedLoginView.as_view(),name='needlogin'),
 	path('role/<int:pk>/', views.RoleDetailView.as_view(),name='role-detail'),
 	path('role/delete/<int:pk>/', views.RoleDeleteView.as_view(),name='role-delete'),
 	path('role/update/<int:pk>/', views.RoleUpdateView.as_view(),name='role-update'),
@@ -29,4 +30,9 @@ urlpatterns = [
 	path('menu/delete/<int:pk>', views.MenuDeleteView.as_view(),name='menu-delete'),
 	path('menu/update/<int:pk>', views.MenuUpdateView.as_view(),name='menu-update'),
 	path('menu/<int:pk>/', views.MenuDetailView.as_view(),name='menu-detail'),
+	path('department/list/', views.DepartmentListView.as_view(),name='department-list'),
+	path('department/add/', views.DepartmentCreateView.as_view(),name='department-add'),
+	path('department/delete/<int:pk>', views.DepartmentDeleteView.as_view(),name='department-delete'),
+	path('department/update/<int:pk>', views.DepartmentUpdateView.as_view(),name='department-update'),
+	path('department/<int:pk>/', views.DepartmentDetailView.as_view(),name='department-detail'),
 ]

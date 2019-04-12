@@ -16,12 +16,12 @@ class Permission(models.Model):
 		(1,'一级'),
 		(2,'二级'),
 	)
-	name = models.CharField('name', max_length=255, unique=True)
-	codename = models.CharField('codename', max_length=100, null=True, blank=True)
-	level = models.IntegerField('level', choices=LEVEL_CHOICES,default=1)
-	parent_permission = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subpermissions')
-	seq = models.IntegerField('seq', default=0)
-	comment = models.CharField('comment', blank=True, max_length=500)
+	name = models.CharField(max_length=255, unique=True, verbose_name='权限名')
+	codename = models.CharField(max_length=100, null=True, blank=True, verbose_name='权限代码')
+	#level = models.IntegerField('level', choices=LEVEL_CHOICES,default=1)
+	#parent_permission = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subpermissions')
+	#seq = models.IntegerField('seq', default=0)
+	comment = models.CharField(blank=True, max_length=500,verbose_name='描述')
 
 	def __str__(self):
 		return self.name
@@ -34,12 +34,13 @@ class Permission(models.Model):
 
 
 class Role(models.Model):
-	name = models.CharField('name', max_length=100, unique=True)
+	name = models.CharField(max_length=100, unique=True,verbose_name='角色名')
 	permissions = models.ManyToManyField(
 		Permission,
-		verbose_name='permissions',
 		blank=True,
+		verbose_name='权限',
 	)
+	comment = models.CharField(blank=True, max_length=500,verbose_name='描述')
 
 	def __str__(self):
 		return self.name
@@ -50,12 +51,32 @@ class Role(models.Model):
 	def get_absolute_url(self):
 		return reverse('users:role-detail', args=[str(self.id)])	
 
+	@property
+	def all_permissions(self):
+		return ', '.join([p.name for p in self.permissions.all()])
+
+
+class Department(models.Model):
+	name = models.CharField(max_length=100, unique=True,verbose_name='部门名字')
+	comment = models.CharField(blank=True, max_length=500,verbose_name='描述')
+
+	def __str__(self):
+		return self.name
+
+	def natural_key(self):
+		return (self.name,)
+
+	def get_absolute_url(self):
+		return reverse('users:department-detail', args=[str(self.id)])	
+
 
 class Menu(models.Model):
 	name = models.CharField('name', max_length=100, unique=True)
 	url = models.CharField('url', null=True, blank=True, max_length=80)
+	icon_name = models.CharField('icon_name', default='file', null=True, blank=True, max_length=20)
 	parent_menu = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='submenus') 
 	is_topmenu = models.BooleanField(default=False,verbose_name='is_topmenu')
+	comment = models.CharField(blank=True, max_length=500,verbose_name='描述')
 
 	def __str__(self):
 		return self.name
@@ -122,7 +143,7 @@ class MyPermissionsMixin(models.Model):
 	models using the ModelBackend.
 	"""
 	is_superuser = models.BooleanField(
-		_('superuser status'),
+		_('超级管理员'),
 		default=False,
 		help_text=_(
 			'Designates that this user has all permissions without '
@@ -131,7 +152,7 @@ class MyPermissionsMixin(models.Model):
 	)
 	roles = models.ManyToManyField(
 		Role,
-		verbose_name=_('roles'),
+		verbose_name=_('角色'),
 		blank=True,
 		help_text=_(
 			'The roles this user belongs to. A user will get all permissions '
@@ -196,7 +217,7 @@ class MyAbstractUser(AbstractBaseUser, MyPermissionsMixin):
 	username_validator = UnicodeUsernameValidator()
 
 	username = models.CharField(
-		_('username'),
+		_('用户名'),
 		max_length=150,
 		unique=True,
 		help_text=_('Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),
@@ -207,14 +228,14 @@ class MyAbstractUser(AbstractBaseUser, MyPermissionsMixin):
 	)
 	first_name = models.CharField(_('first name'), max_length=30, blank=True)
 	last_name = models.CharField(_('last name'), max_length=150, blank=True)
-	email = models.EmailField(_('email address'), blank=True)
+	email = models.EmailField(_('邮箱'), max_length=150, unique=True,blank=False)
 	is_staff = models.BooleanField(
 		_('staff status'),
 		default=False,
 		help_text=_('Designates whether the user can log into this admin site.'),
 	)
 	is_active = models.BooleanField(
-		_('active'),
+		_('激活'),
 		default=True,
 		help_text=_(
 			'Designates whether this user should be treated as active. '
@@ -233,6 +254,10 @@ class MyAbstractUser(AbstractBaseUser, MyPermissionsMixin):
 		verbose_name = _('user')
 		verbose_name_plural = _('users')
 		abstract = True
+
+	@property
+	def full_name(self):
+		return '{} {}'.format(self.first_name, self.last_name)
 
 	def clean(self):
 		super().clean()
@@ -254,10 +279,10 @@ class MyAbstractUser(AbstractBaseUser, MyPermissionsMixin):
 		send_mail(subject, message, from_email, [self.email], **kwargs)
 
 
-
 class User(MyAbstractUser):
-	phone = models.CharField(verbose_name='phone',blank=True,max_length=11)
-
+	name = models.CharField(verbose_name='name',blank=True,max_length=11)
+	phone = models.CharField(verbose_name='手机',blank=True,max_length=11)
+	department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True, related_name='users',verbose_name='部门') 
 	objects = MyUserManager()
 
 	REQUIRED_FIELDS = ['email']
@@ -267,7 +292,7 @@ class User(MyAbstractUser):
 		return self.username
 
 	def get_absolute_url(self):
-		return reverse('users:user-detail', args=[str(self.id)])	
+		return reverse('users:user-list')	
 
 	@property
 	def is_staff(self):

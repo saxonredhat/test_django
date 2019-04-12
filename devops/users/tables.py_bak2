@@ -1,0 +1,15 @@
+import django_tables2 as tables
+from django.urls import reverse
+from django_tables2.utils import A
+from .models import User 
+
+class UserTable(tables.Table):
+	edit = tables.TemplateColumn(verbose_name='操作',template_name='users/tables/update_delete_column.html',attrs={'th': {'class': 'nosort'}})
+	class Meta:
+		model = User 
+		attrs = {
+			'id': 'table_id',
+			'class': 'display',
+		}
+		fields = ('username','email','phone','department','roles','is_active','is_superuser','edit')
+		#template_name = 'django_tables2/semantic.html'

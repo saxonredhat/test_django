@@ -1,0 +1,16 @@
+th a,th a:hover{
+	color:white;
+}
+th a:hover{
+	color:yellow;
+	text-decoration:none;
+}
+td a{
+	color:black;
+	font-weight: bold;
+}
+td a:hover{
+	color:red;
+	font-weight: bold;
+	text-decoration:none;
+}

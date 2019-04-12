@@ -1,0 +1,26 @@
+body, button, input, select, textarea, a, h1 ,h2, h3, h4, h5, h6 , table, td, th { font-family: "Microsoft YaHei",'微软雅黑','宋体' , Tahoma, Helvetica, Arial, "\5b8b\4f53", sans-serif;}
+a { font-size: 14px;}
+thead th {
+	font-weight: bold;
+	font-size: 14px;
+}
+tr td {
+	text-align:center;
+}
+
+th a,th a:hover{
+    color:white;
+}
+th a:hover{
+    color:yellow;
+    text-decoration:none;
+}
+td a{
+    color:black;
+    font-weight: bold;
+}
+td a:hover{
+    color:red;
+    font-weight: bold;
+    text-decoration:none;
+}

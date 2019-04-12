@@ -1,0 +1,26 @@
+{% extends 'datatable.html' %}
+{% load django_tables2 %}
+{% block title %}角色管理{% endblock %}
+
+<!-- Content Header (Page header) -->
+{% block content-header %}	
+<section class="content-header">
+  <h1>
+    角色管理
+    <small></small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i> 主页</a></li>
+    <li class="active">角色管理</li>
+  </ol>
+</section>
+{% endblock %}
+
+{% block boxtitle %}
+角色列表
+<a class="btn btn-success btn-sm" href="{% url 'users:role-add' %}"><i class="fa fa-plus"></i></a>
+{% endblock %}
+
+{% block table %}
+	{% render_table table %}
+{% endblock %}

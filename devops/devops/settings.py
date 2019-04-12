@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['*',]
 # Application definition
 
 INSTALLED_APPS = [
+	'assets.apps.AssetsConfig',
 	'users.apps.UsersConfig',
 	'django.contrib.admin',
 	'django.contrib.auth',
@@ -38,7 +39,12 @@ INSTALLED_APPS = [
 	'django.contrib.sessions',
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
+	'crispy_forms',
+	'widget_tweaks',
+	'octicons',
+	'django_tables2',
 ]
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
@@ -56,10 +62,11 @@ AUTHENTICATION_BACKENDS = (
 
 ROOT_URLCONF = 'devops.urls'
 
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 TEMPLATES = [
 	{
 		'BACKEND': 'django.template.backends.django.DjangoTemplates',
-		'DIRS': [],
+		'DIRS': [ TEMPLATE_DIR,],
 		'APP_DIRS': True,
 		'OPTIONS': {
 			'context_processors': [
@@ -67,6 +74,7 @@ TEMPLATES = [
 				'django.template.context_processors.request',
 				'django.contrib.auth.context_processors.auth',
 				'django.contrib.messages.context_processors.messages',
+				'users.context_processor.topmenus',
 			],
 		},
 	},
@@ -111,7 +119,8 @@ AUTH_USER_MODEL = 'users.User'
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+#LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
 #TIME_ZONE = 'UTC'
 TIME_ZONE = 'Asia/Shanghai'
@@ -121,13 +130,17 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
-
+#security
+AES_KEY = 'THIS_IS_KEY'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+	os.path.join(BASE_DIR, 'static'),
+]
 
 LOGIN_URL = '/users/login/'
 ADMIN_LOGIN = 'admin'
